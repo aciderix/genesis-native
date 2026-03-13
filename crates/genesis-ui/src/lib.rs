@@ -22,7 +22,7 @@ pub struct GenesisUiPlugin;
 
 impl Plugin for GenesisUiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(EguiPlugin::default())
+        app.add_plugins(EguiPlugin { enable_multipass_for_primary_context: true })
             .init_resource::<UiState>()
             .add_systems(Update, ui_system);
     }

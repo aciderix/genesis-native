@@ -85,6 +85,14 @@ struct ParticleMeshes {
     cylinder: Handle<Mesh>,
 }
 
+
+/// Tracks previous frame touch positions for gesture detection.
+#[derive(Resource, Default)]
+struct TouchState {
+    /// Previous finger positions: (touch_id, screen_pos).
+    prev_fingers: Vec<(u64, Vec2)>,
+}
+
 /// Tracks which particle (if any) is currently selected for inspection.
 #[derive(Resource, Default)]
 pub struct SelectedParticle {
@@ -160,6 +168,7 @@ fn setup_rendering(
     });
     commands.insert_resource(ParticleMeshes { sphere, cylinder });
     commands.insert_resource(SelectedParticle::default());
+    commands.insert_resource(TouchState::default());
 
     // ------------------------------------------------------------------
     // Camera
@@ -366,18 +375,21 @@ fn sync_bonds(
 // Camera
 // ---------------------------------------------------------------------------
 
-/// Orbital camera controlled by mouse and keyboard:
+/// Orbital camera controlled by mouse, keyboard, **and touch gestures**:
 ///
-/// - **Right / Middle mouse drag** – rotate (yaw + pitch)
-/// - **Scroll wheel** – zoom in / out
+/// - **Right / Middle mouse drag** or **1-finger drag** – rotate (yaw + pitch)
+/// - **Scroll wheel** or **pinch-to-zoom** – zoom in / out
 /// - **W / A / S / D** – pan target horizontally
 /// - **Q / E** – raise / lower target
+/// - **2-finger drag** – pan target on mobile
 fn update_camera(
     mut camera_q: Query<(&mut Transform, &mut OrbitCamera)>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     mut mouse_motion: EventReader<bevy::input::mouse::MouseMotion>,
     mut scroll: EventReader<bevy::input::mouse::MouseWheel>,
     keyboard: Res<ButtonInput<KeyCode>>,
+    mut touch_events: EventReader<bevy::input::touch::TouchInput>,
+    mut touch_state: ResMut<TouchState>,
     time: Res<Time>,
 ) {
     let Ok((mut transform, mut cam)) = camera_q.get_single_mut() else {
@@ -391,7 +403,6 @@ fn update_camera(
             cam.pitch = (cam.pitch - ev.delta.y * 0.005).clamp(-1.5, 1.5);
         }
     } else {
-        // Consume unneeded events to avoid accumulation.
         mouse_motion.clear();
     }
 
@@ -399,6 +410,67 @@ fn update_camera(
     for ev in scroll.read() {
         cam.distance = (cam.distance - ev.y * cam.distance * 0.1).clamp(5.0, 200.0);
     }
+
+    // ---- Touch gestures ----
+    // Collect current frame touches
+    let mut current_fingers: Vec<(u64, Vec2)> = Vec::new();
+    for ev in touch_events.read() {
+        match ev.phase {
+            bevy::input::touch::TouchPhase::Started | bevy::input::touch::TouchPhase::Moved => {
+                // Update or add this finger
+                if let Some(existing) = current_fingers.iter_mut().find(|(id, _)| *id == ev.id) {
+                    existing.1 = ev.position;
+                } else {
+                    current_fingers.push((ev.id, ev.position));
+                }
+            }
+            bevy::input::touch::TouchPhase::Ended | bevy::input::touch::TouchPhase::Canceled => {
+                current_fingers.retain(|(id, _)| *id != ev.id);
+            }
+        }
+    }
+
+    let prev = &touch_state.prev_fingers;
+
+    if current_fingers.len() == 1 && prev.len() == 1 {
+        // ---- 1-finger drag → orbit ----
+        if current_fingers[0].0 == prev[0].0 {
+            let delta = current_fingers[0].1 - prev[0].1;
+            cam.yaw -= delta.x * 0.005;
+            cam.pitch = (cam.pitch - delta.y * 0.005).clamp(-1.5, 1.5);
+        }
+    } else if current_fingers.len() >= 2 && prev.len() >= 2 {
+        // ---- 2-finger pinch → zoom + 2-finger drag → pan ----
+        let cur_a = current_fingers[0].1;
+        let cur_b = current_fingers[1].1;
+        let cur_center = (cur_a + cur_b) * 0.5;
+        let cur_dist = cur_a.distance(cur_b);
+
+        // Find matching previous fingers
+        let prev_a = prev.iter().find(|(id, _)| *id == current_fingers[0].0);
+        let prev_b = prev.iter().find(|(id, _)| *id == current_fingers[1].0);
+
+        if let (Some(pa), Some(pb)) = (prev_a, prev_b) {
+            let prev_center = (pa.1 + pb.1) * 0.5;
+            let prev_dist = pa.1.distance(pb.1);
+
+            // Pinch zoom
+            if prev_dist > 1.0 {
+                let zoom_factor = prev_dist / cur_dist;
+                cam.distance = (cam.distance * zoom_factor).clamp(5.0, 200.0);
+            }
+
+            // Pan
+            let pan_delta = cur_center - prev_center;
+            let pan_speed = cam.distance * 0.002;
+            let right_dir = Vec3::new(cam.yaw.cos(), 0.0, -cam.yaw.sin());
+            let up_dir = Vec3::Y;
+            cam.target -= right_dir * pan_delta.x * pan_speed;
+            cam.target += up_dir * pan_delta.y * pan_speed;
+        }
+    }
+
+    touch_state.prev_fingers = current_fingers;
 
     // ---- Pan (keyboard) ----
     let speed = 20.0 * time.delta_secs();

@@ -45,6 +45,8 @@ pub struct UiState {
     /// Set to `true` when the user presses the Reset button.  The simulation
     /// should check this flag, act on it, and clear it.
     pub reset_requested: bool,
+    /// Auto-detected: true when running on a small screen (mobile).
+    pub is_mobile: bool,
 }
 
 impl Default for UiState {
@@ -57,6 +59,7 @@ impl Default for UiState {
             show_controls: true,
             selected_particle: None,
             reset_requested: false,
+            is_mobile: false,
         }
     }
 }
@@ -190,7 +193,25 @@ fn ui_system(
     handle_keyboard(&keyboard, &mut config, &mut ui_state);
 
     let ctx = contexts.ctx_mut();
+
+    // ── Responsive scaling for mobile ───────────────────────────────────
+    // If the screen is small (e.g. phone), scale up the UI and use larger
+    // touch targets.  We determine "mobile" by checking screen width.
+    let screen_rect = ctx.input(|i| i.screen_rect());
+    let is_mobile = screen_rect.width() < 800.0;
+    if is_mobile {
+        ctx.set_pixels_per_point(2.0);
+    }
+
+    ui_state.is_mobile = is_mobile;
+
     apply_dark_theme(ctx);
+
+    // On mobile, auto-collapse panels on first frame to save space
+    if is_mobile && stats.tick == 0 {
+        ui_state.show_controls = false;
+        ui_state.show_charts = false;
+    }
 
     let era = detect_era(&stats, &counters);
     let fps = 1.0 / time.delta_secs().max(1e-6);

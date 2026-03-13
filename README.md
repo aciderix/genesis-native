@@ -1,58 +1,32 @@
-# 🧬 Genesis Engine v6.1 — Native
+# 🧬 Genesis Engine v6.1 — Native Edition
 
-A high-performance 3D artificial life simulation built with **Rust** and **Bevy 0.15**.
+A high-performance artificial life simulation built with **Rust** and **Bevy 0.15**.
+Particles self-organize into organisms, colonies, and evolving ecosystems.
 
-![CI](https://github.com/aciderix/genesis-native/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Build](https://img.shields.io/github/actions/workflow/status/aciderix/genesis-native/ci.yml?label=CI)
 
 ## ✨ Features
 
-- **Particle-based life simulation** — organisms, metabolism, reproduction, colonies
-- **Real-time 3D rendering** with Bevy's GPU-accelerated pipeline
-- **Interactive UI** via egui (parameter tweaking, stats, controls)
-- **Spatial grid** + scalar fields for efficient physics
-- **Chemical signals**, bonding, culture & metacognition systems
-- **Cross-platform** — Windows, macOS, Linux, Web (WASM)
-
-## 📦 Project Structure
-
-```
-genesis-native/
-├── src/main.rs                    # Entry point — wires everything together
-├── crates/
-│   ├── genesis-sim/               # Core simulation engine
-│   │   └── src/
-│   │       ├── systems/           # ECS systems (forces, metabolism, reproduction…)
-│   │       ├── util/              # Spatial grid, scalar fields
-│   │       ├── components.rs      # Bevy ECS components
-│   │       ├── resources.rs       # Shared simulation resources
-│   │       └── config.rs          # Simulation parameters
-│   ├── genesis-render/            # 3D rendering (Bevy meshes, materials, camera)
-│   └── genesis-ui/                # egui interface panels
-├── .github/workflows/
-│   ├── ci.yml                     # CI: build on every push (Linux/Win/Mac/WASM)
-│   └── release.yml                # Auto-release on version tags
-└── Cargo.toml                     # Workspace manifest
-```
+- **6 particle types** (Alpha, Beta, Catalyst, Data, Membrane, Motor)
+- **Emergent life**: bonds → organisms → colonies → reproduction → evolution
+- **Day/Night cycle** with solar energy dynamics
+- **Cultural evolution** & metacognition systems
+- **Full 3D rendering** with orbital camera
+- **Real-time UI** with HUD, charts, inspector, event log
+- **Touch controls** for mobile (pinch-to-zoom, drag-to-orbit)
+- **Cross-platform**: Windows, macOS, Linux, Web (WASM), Android, iOS
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-1. **Install Rust** (if not already):
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
-   On Windows: download [rustup-init.exe](https://rustup.rs)
+Install Rust:
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
 
-2. **System dependencies** (for Bevy rendering):
-
-   | Platform | Command |
-   |---|---|
-   | **macOS** | Nothing extra needed ✅ |
-   | **Linux (Ubuntu/Debian)** | `sudo apt install pkg-config libx11-dev libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev` |
-   | **Windows** | Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (C++ workload) |
-
-### Build & Run
+### Build & Run (Desktop)
 
 ```bash
 git clone https://github.com/aciderix/genesis-native.git
@@ -60,78 +34,82 @@ cd genesis-native
 cargo run --release
 ```
 
-> ⚡ **Important**: Always use `--release` — Bevy runs ~10× slower in debug mode.
+> **Note**: First compile takes ~3-5 min (Bevy pulls many deps). `--release` is crucial — debug mode is ~10× slower.
 
-First build takes ~3–5 minutes (downloading + compiling dependencies). Subsequent builds: ~10 seconds.
-
-## 🌐 Web Build (WASM)
+### 🌐 Web (WASM)
 
 ```bash
-# Add WASM target
 rustup target add wasm32-unknown-unknown
-cargo install wasm-bindgen-cli
-
-# Build
 cargo build --release --target wasm32-unknown-unknown
-
-# Generate JS bindings
-wasm-bindgen \
-  target/wasm32-unknown-unknown/release/genesis.wasm \
-  --out-dir web-dist --target web --no-typescript
 ```
 
-Then serve `web-dist/` with any HTTP server.
+### 📱 Android
 
-## 📱 Mobile (Experimental)
-
-### Android
 ```bash
 rustup target add aarch64-linux-android
 cargo install cargo-ndk
 cargo ndk -t arm64-v8a build --release
 ```
 
-### iOS
+### 📱 iOS (requires macOS + Xcode)
+
 ```bash
 rustup target add aarch64-apple-ios
 cargo build --release --target aarch64-apple-ios
 ```
 
-> ⚠️ Mobile requires UI adaptation (touch controls, larger buttons, battery-aware particle count).
+## 🎮 Controls
 
-## 🏗️ CI/CD
+### Desktop (Mouse + Keyboard)
 
-| Workflow | Trigger | What it does |
-|---|---|---|
-| **CI** | Push / PR to `main` | Builds for Linux, Windows, macOS, WASM |
-| **Release** | Push tag `v*` | Builds + uploads binaries to GitHub Releases |
+| Input | Action |
+|---|---|
+| **Right/Middle mouse drag** | Rotate camera |
+| **Scroll wheel** | Zoom in/out |
+| **W/A/S/D** | Pan camera |
+| **Q/E** | Move camera up/down |
+| **Space** | Pause/Play |
+| **1/2/3/4** | Speed 1×/5×/10×/20× |
+| **H/C/I/E** | Toggle HUD/Charts/Inspector/Events |
+| **R** | Reset simulation |
 
-### Creating a release
+### Mobile (Touch)
+
+| Gesture | Action |
+|---|---|
+| **1-finger drag** | Rotate camera |
+| **Pinch** | Zoom in/out |
+| **2-finger drag** | Pan camera |
+
+## 🏗️ Architecture
+
+```
+genesis-native/
+├── src/main.rs                 # App entry point
+├── crates/
+│   ├── genesis-sim/            # Core simulation engine
+│   │   ├── components.rs       # ParticleType, CellRole
+│   │   ├── config.rs           # SimConfig
+│   │   ├── resources.rs        # SimStats, EventLog, etc.
+│   │   ├── particle_store.rs   # SoA particle data
+│   │   └── systems/            # 14 simulation systems
+│   ├── genesis-render/         # Bevy 3D rendering + camera
+│   └── genesis-ui/             # egui HUD & panels
+└── .github/workflows/
+    ├── ci.yml                  # Build on every push
+    └── release.yml             # Auto-release on tags
+```
+
+## 📦 Releases
+
+Binaries are automatically built for Windows, macOS, and Linux when a version tag is pushed:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-This triggers automatic builds and creates a GitHub Release with downloadable binaries for all platforms.
-
-## 🎮 Controls
-
-| Action | Input |
-|---|---|
-| Orbit camera | Right-click + drag |
-| Zoom | Scroll wheel |
-| Pan | Middle-click + drag |
-| Toggle UI panels | egui sidebar |
-
-## 📊 Performance
-
-| Target | Relative Speed | Status |
-|---|---|---|
-| Native (PC) | ⭐⭐⭐⭐⭐ 100% | ✅ Ready |
-| Web (WASM) | ⭐⭐⭐ ~60% | ✅ Ready |
-| Android | ⭐⭐⭐⭐ ~80% | ⚠️ UI adaptation needed |
-| iOS | ⭐⭐⭐⭐ ~80% | ⚠️ UI adaptation + Mac required |
+This creates a GitHub Release with downloadable binaries.
 
 ## 📄 License
 

@@ -41,7 +41,7 @@ jobs:
         run: |
           WASM_BINDGEN_VERSION=$(cargo metadata --format-version 1 2>/dev/null | \
             python3 -c "import sys,json; pkgs=json.load(sys.stdin)['packages']; print([p['version'] for p in pkgs if p['name']=='wasm-bindgen'][0])" 2>/dev/null || echo "0.2.100")
-          cargo install wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION" || cargo install wasm-bindgen-cli
+          cargo install --force wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION" || cargo install wasm-bindgen-cli
 
       - name: Install system dependencies
         run: |

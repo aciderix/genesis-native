@@ -1,0 +1,41 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/genesis-sim",
+    "crates/genesis-render",
+    "crates/genesis-ui",
+]
+
+[workspace.dependencies]
+bevy = { version = "0.15" }
+bevy_egui = "0.34"
+rand = "0.8"
+rand_xoshiro = "0.6"
+serde = { version = "1", features = ["derive"] }
+bincode = "1"
+flate2 = "1"
+
+[package]
+name = "genesis-native"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "genesis"
+path = "src/main.rs"
+
+[dependencies]
+bevy = { workspace = true }
+bevy_egui = { workspace = true }
+genesis-sim = { path = "crates/genesis-sim" }
+genesis-render = { path = "crates/genesis-render" }
+genesis-ui = { path = "crates/genesis-ui" }
+
+# Optimize dependencies in debug mode for faster iteration
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+opt-level = 3

@@ -1,0 +1,115 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-release:
+    name: Release — ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: Linux
+            runner: ubuntu-latest
+            artifact: genesis-linux-x86_64
+            binary: genesis
+          - os: Windows
+            runner: windows-latest
+            artifact: genesis-windows-x86_64
+            binary: genesis.exe
+          - os: macOS
+            runner: macos-latest
+            artifact: genesis-macos-arm64
+            binary: genesis
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-release-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-release-
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            pkg-config libx11-dev libasound2-dev libudev-dev \
+            libwayland-dev libxkbcommon-dev libvulkan-dev
+
+      - name: Build release
+        run: cargo build --release
+
+      - name: Package (Unix)
+        if: matrix.os != 'Windows'
+        run: |
+          mkdir -p dist
+          cp target/release/${{ matrix.binary }} dist/
+          cd dist && tar czf ../${{ matrix.artifact }}.tar.gz *
+
+      - name: Package (Windows)
+        if: matrix.os == 'Windows'
+        run: |
+          mkdir dist
+          copy target\release\${{ matrix.binary }} dist\
+          cd dist && Compress-Archive * ..\${{ matrix.artifact }}.zip
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ matrix.artifact }}.tar.gz
+            ${{ matrix.artifact }}.zip
+          generate_release_notes: true
+
+  build-wasm-release:
+    name: Release — WASM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: wasm-release-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli
+      - name: Build WASM
+        run: cargo build --release --target wasm32-unknown-unknown
+      - name: Run wasm-bindgen
+        run: |
+          mkdir -p web-dist
+          wasm-bindgen \
+            target/wasm32-unknown-unknown/release/genesis.wasm \
+            --out-dir web-dist --target web --no-typescript
+      - name: Package WASM
+        run: cd web-dist && tar czf ../genesis-wasm.tar.gz *
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: genesis-wasm.tar.gz
+          generate_release_notes: true

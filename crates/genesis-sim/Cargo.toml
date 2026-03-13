@@ -1,0 +1,12 @@
+[package]
+name = "genesis-sim"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = { workspace = true }
+rand = { workspace = true }
+rand_xoshiro = { workspace = true }
+serde = { workspace = true }
+bincode = { workspace = true }
+flate2 = { workspace = true }

@@ -69,48 +69,87 @@ impl Default for UiState {
 // ──────────────────────────────────────────────────────────────────────────────
 
 /// Human-readable era label derived from current simulation statistics.
-fn detect_era(stats: &SimStats, counters: &SimCounters) -> &'static str {
-    // Order matters — later stages override earlier ones.
-    if counters.total_sexual_repro > 0 {
-        return "Symbiotic";
+/// Matches the web version's 14-era detection with identical thresholds.
+fn detect_era(
+    stats: &SimStats,
+    counters: &SimCounters,
+    store: &ParticleStore,
+    org_reg: &OrganismRegistry,
+    active_symbols: &ActiveSymbolCodes,
+    active_genes: &ActiveGeneCount,
+    metabolite_flow: &MetaboliteFlowRate,
+    active_memes: &ActiveMemes,
+    metacog_count: &MetaCogOrgCount,
+    build_count: &BuildStructureCount,
+) -> &'static str {
+    // P4 eras (highest first) — matches web getEra() exactly
+    if metacog_count.0 >= 3 {
+        return "Cognitive Age";
     }
-    if stats.colony_count > 0 {
-        return "Colonial";
+    if counters.total_symbiogenesis >= 3 {
+        return "Symbiotic Age";
     }
-    if counters.total_pred > 0 {
-        return "Predatory";
+    if active_memes.0.len() >= 4 {
+        return "Cultural Age";
     }
-    if stats.max_generation > 3 {
-        return "Replication";
+    let has_tool = org_reg.organisms.values().any(|o| o.tool_use_count > 0);
+    if has_tool && build_count.0 >= 2 {
+        return "Tool Age";
+    }
+    // P3 eras
+    if active_symbols.0.len() >= 5 {
+        return "Symbolic Age";
+    }
+    let spec_orgs = org_reg.organisms.values().filter(|o| o.specialization > 0.4).count();
+    if spec_orgs >= 3 {
+        return "Specialized Age";
+    }
+    // P2 eras
+    if active_genes.0 >= 10 && metabolite_flow.0 > 5.0 {
+        return "Genetic Age";
+    }
+    if metabolite_flow.0 > 8.0 {
+        return "Metabolic Age";
+    }
+    // Original eras
+    let dep_count = store.deposit_count();
+    let max_col_size = org_reg.organisms.values()
+        .filter(|o| o.colony_id >= 0)
+        .count();
+    if dep_count > 30 && max_col_size >= 3 {
+        return "Construction Age";
+    }
+    if stats.colony_count > 0 || max_col_size >= 2 {
+        return "Colonial Era";
+    }
+    if counters.total_pred > 5 {
+        return "Predatory Age";
+    }
+    if counters.total_repro > 3 {
+        return "Replication Era";
     }
     if stats.organism_count > 0 {
-        if stats.max_generation > 1 {
-            return "Replication";
-        }
-        if stats.organism_count > 5 {
-            return "ProtoLife";
-        }
-        return "Chemical";
+        return "Proto-life";
     }
-    if stats.tick < 50 {
-        return "Primordial";
+    if store.has_any_bonds() {
+        return "Chemical Age";
     }
-    "Chemical"
+    "Primordial Soup"
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Colours & helpers
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Map a `ParticleType` to an egui display colour.
+/// Map a `ParticleType` to an egui display colour (matches web TYPE_COLORS).
 fn type_color(pt: &ParticleType) -> egui::Color32 {
     match pt {
-        ParticleType::Alpha => egui::Color32::from_rgb(100, 195, 255),
-        ParticleType::Beta => egui::Color32::from_rgb(255, 140, 64),
-        ParticleType::Catalyst => egui::Color32::from_rgb(77, 255, 102),
-        ParticleType::Data => egui::Color32::from_rgb(217, 128, 255),
-        ParticleType::Membrane => egui::Color32::from_rgb(180, 180, 180),
-        ParticleType::Motor => egui::Color32::from_rgb(255, 255, 77),
+        ParticleType::Alpha => egui::Color32::from_rgb(192, 192, 192),    // #C0C0C0 Silver
+        ParticleType::Beta => egui::Color32::from_rgb(255, 215, 0),       // #FFD700 Gold
+        ParticleType::Catalyst => egui::Color32::from_rgb(80, 200, 120),  // #50C878 Emerald
+        ParticleType::Data => egui::Color32::from_rgb(65, 105, 225),      // #4169E1 Royal Blue
+        ParticleType::Membrane => egui::Color32::from_rgb(155, 89, 182),  // #9B59B6 Purple
+        ParticleType::Motor => egui::Color32::from_rgb(231, 76, 60),      // #E74C3C Red
     }
 }
 
@@ -188,6 +227,12 @@ fn ui_system(
     mut ui_state: ResMut<UiState>,
     keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
+    adv_symbols: Res<ActiveSymbolCodes>,
+    adv_genes: Res<ActiveGeneCount>,
+    adv_metabolite: Res<MetaboliteFlowRate>,
+    adv_memes: Res<ActiveMemes>,
+    adv_metacog: Res<MetaCogOrgCount>,
+    adv_build: Res<BuildStructureCount>,
 ) {
     // ── Keyboard shortcuts ──────────────────────────────────────────────
     handle_keyboard(&keyboard, &mut config, &mut ui_state);
@@ -213,7 +258,11 @@ fn ui_system(
         ui_state.show_charts = false;
     }
 
-    let era = detect_era(&stats, &counters);
+    let era = detect_era(
+        &stats, &counters, &store, &org_reg,
+        &adv_symbols, &adv_genes, &adv_metabolite,
+        &adv_memes, &adv_metacog, &adv_build,
+    );
     let fps = 1.0 / time.delta_secs().max(1e-6);
 
     // ── 1. Top HUD bar ─────────────────────────────────────────────────

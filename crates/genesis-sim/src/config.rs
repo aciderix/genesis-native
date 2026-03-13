@@ -39,12 +39,12 @@ pub fn mulberry32(seed: u32) -> impl FnMut() -> f32 {
 /// Indices: 0=Alpha, 1=Beta, 2=Catalyst, 3=Data, 4=Membrane, 5=Motor
 pub const BASE_AFFINITY: [[f32; 6]; 6] = [
     //  Alpha   Beta    Cat     Data    Memb    Motor
-    [  0.20,  0.15, -0.10,  0.05,  0.10,  0.00 ], // Alpha
-    [  0.15,  0.10,  0.20, -0.05,  0.05,  0.10 ], // Beta
-    [ -0.10,  0.20,  0.05,  0.15, -0.05,  0.05 ], // Catalyst
-    [  0.05, -0.05,  0.15,  0.10,  0.10,  0.15 ], // Data
-    [  0.10,  0.05, -0.05,  0.10,  0.25, -0.10 ], // Membrane
-    [  0.00,  0.10,  0.05,  0.15, -0.10,  0.15 ], // Motor
+    [  0.10,  0.30,  0.20,  0.10,  0.40,  0.30 ], // Alpha
+    [  0.30, -0.10,  0.50,  0.20,  0.30,  0.10 ], // Beta
+    [  0.20,  0.50, -0.20,  0.40,  0.10,  0.20 ], // Catalyst
+    [  0.10,  0.20,  0.40,  0.60,  0.10,  0.30 ], // Data
+    [  0.40,  0.30,  0.10,  0.10,  0.50,  0.00 ], // Membrane
+    [  0.30,  0.10,  0.20,  0.30,  0.00, -0.30 ], // Motor
 ];
 
 /// Base bond-strength matrix — how strong a bond forms between two particle types.
@@ -52,12 +52,12 @@ pub const BASE_AFFINITY: [[f32; 6]; 6] = [
 /// Values in `[0.0, 1.0]`. Higher = stronger bond (harder to break).
 pub const BASE_BOND_STRENGTH: [[f32; 6]; 6] = [
     //  Alpha   Beta    Cat     Data    Memb    Motor
-    [  0.50,  0.40,  0.20,  0.30,  0.60,  0.10 ], // Alpha
-    [  0.40,  0.30,  0.50,  0.20,  0.35,  0.45 ], // Beta
-    [  0.20,  0.50,  0.15,  0.45,  0.25,  0.30 ], // Catalyst
-    [  0.30,  0.20,  0.45,  0.35,  0.40,  0.55 ], // Data
-    [  0.60,  0.35,  0.25,  0.40,  0.70,  0.15 ], // Membrane
-    [  0.10,  0.45,  0.30,  0.55,  0.15,  0.40 ], // Motor
+    [  0.70,  0.50,  0.40,  0.30,  0.65,  0.50 ], // Alpha
+    [  0.50,  0.30,  0.70,  0.40,  0.50,  0.30 ], // Beta
+    [  0.40,  0.70,  0.20,  0.60,  0.30,  0.40 ], // Catalyst
+    [  0.30,  0.40,  0.60,  0.80,  0.20,  0.50 ], // Data
+    [  0.65,  0.50,  0.30,  0.20,  0.75,  0.20 ], // Membrane
+    [  0.50,  0.30,  0.40,  0.50,  0.20,  0.40 ], // Motor
 ];
 
 /// Base signal-conductance matrix — efficiency of signal propagation across a bond.
@@ -65,12 +65,12 @@ pub const BASE_BOND_STRENGTH: [[f32; 6]; 6] = [
 /// Values in `[0.0, 1.0]`. Higher = signal passes more easily.
 pub const BASE_SIGNAL_CONDUCTANCE: [[f32; 6]; 6] = [
     //  Alpha   Beta    Cat     Data    Memb    Motor
-    [  0.30,  0.20,  0.10,  0.40,  0.15,  0.05 ], // Alpha
-    [  0.20,  0.25,  0.30,  0.15,  0.10,  0.20 ], // Beta
-    [  0.10,  0.30,  0.20,  0.50,  0.05,  0.15 ], // Catalyst
-    [  0.40,  0.15,  0.50,  0.60,  0.20,  0.35 ], // Data
-    [  0.15,  0.10,  0.05,  0.20,  0.40,  0.10 ], // Membrane
-    [  0.05,  0.20,  0.15,  0.35,  0.10,  0.30 ], // Motor
+    [  0.10,  0.20,  0.30,  0.50,  0.10,  0.20 ], // Alpha
+    [  0.20,  0.40,  0.60,  0.50,  0.20,  0.30 ], // Beta
+    [  0.30,  0.60,  0.20,  0.70,  0.20,  0.40 ], // Catalyst
+    [  0.50,  0.50,  0.70,  0.90,  0.30,  0.60 ], // Data
+    [  0.10,  0.20,  0.20,  0.30,  0.10,  0.10 ], // Membrane
+    [  0.20,  0.30,  0.40,  0.60,  0.10,  0.30 ], // Motor
 ];
 
 // ---------------------------------------------------------------------------
@@ -188,8 +188,8 @@ pub fn generate_config(seed: Option<u32>) -> SimConfig {
 
     let world_size = range(30.0, 50.0);
     let particle_count = range(1200.0, 2000.0) as usize;
-    let vent_count = range(3.0, 8.0) as usize;
-    let vent_strength = range(0.03, 0.12);
+    let vent_count = range(3.0, 9.0) as usize;
+    let vent_strength = range(0.4, 1.0);
     let interaction_radius = range(3.5, 5.0);
     let bond_distance = range(1.8, 2.4);
     let solar_strength = range(0.10, 0.25);
@@ -206,7 +206,7 @@ pub fn generate_config(seed: Option<u32>) -> SimConfig {
     let mut td = [0.0f32; NUM_TYPES];
     let mut total = 0.0f32;
     for d in td.iter_mut() {
-        let w = rng() * 0.8 + 0.2; // avoid near-zero weights
+        let w = 0.5 + rng(); // match web: 0.5 + rng()
         *d = w;
         total += w;
     }

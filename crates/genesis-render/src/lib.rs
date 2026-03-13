@@ -126,13 +126,14 @@ fn setup_rendering(
 
     // Each of the six particle types gets a distinctive colour with a
     // subtle emissive glow so they remain visible even in shadow.
+    // Colours match web TYPE_COLORS: Silver, Gold, Emerald, Royal Blue, Purple, Red
     let type_colors: [[f32; 3]; 6] = [
-        [0.3, 0.6, 1.0], // Alpha    — blue
-        [0.2, 1.0, 0.3], // Beta     — green
-        [1.0, 0.5, 0.0], // Catalyst — orange
-        [1.0, 1.0, 0.2], // Data     — yellow
-        [0.7, 0.3, 1.0], // Membrane — purple
-        [1.0, 0.2, 0.2], // Motor    — red
+        [0.75, 0.75, 0.75], // Alpha    — silver  (#C0C0C0)
+        [1.00, 0.84, 0.00], // Beta     — gold    (#FFD700)
+        [0.31, 0.78, 0.47], // Catalyst — emerald (#50C878)
+        [0.25, 0.41, 0.88], // Data     — royal blue (#4169E1)
+        [0.61, 0.35, 0.71], // Membrane — purple  (#9B59B6)
+        [0.91, 0.30, 0.24], // Motor    — red     (#E74C3C)
     ];
 
     let mats: [Handle<StandardMaterial>; 6] = std::array::from_fn(|i| {

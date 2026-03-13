@@ -503,6 +503,16 @@ impl ParticleStore {
         }
     }
 
+    /// Count the number of deposit particles.
+    pub fn deposit_count(&self) -> usize {
+        (0..self.len()).filter(|&i| self.alive[i] && self.is_deposit[i]).count()
+    }
+
+    /// Check if any alive particle has at least one bond.
+    pub fn has_any_bonds(&self) -> bool {
+        (0..self.len()).any(|i| self.alive[i] && !self.bonds[i].is_empty())
+    }
+
     /// Pre-allocate capacity for the expected number of particles.
     pub fn reserve(&mut self, additional: usize) {
         self.id.reserve(additional);

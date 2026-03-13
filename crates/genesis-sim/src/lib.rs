@@ -86,9 +86,9 @@ impl Plugin for GenesisSimPlugin {
 
         // ── 2. Randomised interaction matrices ──────────────────────────
         let mut rng_fn = mulberry32(seed);
-        let affinity = randomize_matrix(&BASE_AFFINITY, &mut rng_fn, 0.3);
-        let bond_str = randomize_matrix(&BASE_BOND_STRENGTH, &mut rng_fn, 0.2);
-        let sig_cond = randomize_matrix(&BASE_SIGNAL_CONDUCTANCE, &mut rng_fn, 0.25);
+        let affinity = randomize_matrix(&BASE_AFFINITY, &mut rng_fn, 0.35);
+        let bond_str = randomize_matrix(&BASE_BOND_STRENGTH, &mut rng_fn, 0.25);
+        let sig_cond = randomize_matrix(&BASE_SIGNAL_CONDUCTANCE, &mut rng_fn, 0.2);
         let matrices = SimMatrices {
             affinity,
             bond_str,
@@ -117,12 +117,12 @@ impl Plugin for GenesisSimPlugin {
         let vents: Vec<Vent> = (0..config.vent_count)
             .map(|_| Vent {
                 position: Vec3::new(
-                    (rng_fn() - 0.5) * ws,
-                    (rng_fn() - 0.5) * ws,
-                    (rng_fn() - 0.5) * ws,
+                    (rng_fn() - 0.5) * ws * 0.8,
+                    (rng_fn() - 0.5) * ws * 0.8,
+                    (rng_fn() - 0.5) * ws * 0.8,
                 ),
                 strength: config.vent_strength * (0.5 + rng_fn()),
-                radius: 3.0 + rng_fn() * 4.0,
+                radius: 4.0 + rng_fn() * 6.0,
             })
             .collect();
 
@@ -136,7 +136,7 @@ impl Plugin for GenesisSimPlugin {
             let x = (sim_rng.next() - 0.5) * ws;
             let y = (sim_rng.next() - 0.5) * ws;
             let z = (sim_rng.next() - 0.5) * ws;
-            let energy = 3.0 + sim_rng.next() * 7.0;
+            let energy = 8.0 + sim_rng.next() * 12.0;
             store.spawn(ptype, x, y, z, energy, &mut sim_rng);
         }
 
@@ -300,11 +300,13 @@ fn simulation_tick(
             &stats,
         );
 
-        // ── Phase 5: Signals & phase ────────────────────────────────────
-        // Propagate chemical signals along bond networks.
-        systems::signals::propagate_signals_inner(&mut store, &matrices, &col_reg);
-        // Advance oscillator phase for rhythmic behaviours.
-        systems::signals::update_phase_inner(&mut store, &matrices);
+        // ── Phase 5: Signals & phase (every 2 ticks) ──────────────────
+        if tick % 2 == 0 {
+            // Propagate chemical signals along bond networks.
+            systems::signals::propagate_signals_inner(&mut store, &matrices, &col_reg);
+            // Advance oscillator phase for rhythmic behaviours.
+            systems::signals::update_phase_inner(&mut store, &matrices);
+        }
 
         // ── Phase 6: Metabolism ──────────────────────────────────────────
         // Energy intake from nutrients, catalytic reactions, waste
@@ -320,29 +322,30 @@ fn simulation_tick(
             &org_reg,
         );
 
-        // ── Phase 7: Organism detection ─────────────────────────────────
-        // Run connected-component analysis on the bond graph to identify
-        // and register multi-particle organisms.
-        systems::organisms::detect_organisms_inner(
-            &mut store,
-            &mut org_reg,
-            &mut events,
-            &mut counters,
-            &mut phylogeny,
-            &stats,
-        );
+        // ── Phase 7: Organism detection (every 4 ticks) ────────────────
+        if tick % 4 == 0 {
+            systems::organisms::detect_organisms_inner(
+                &mut store,
+                &mut org_reg,
+                &mut events,
+                &mut counters,
+                &mut phylogeny,
+                &stats,
+            );
+        }
 
-        // ── Phase 8: Advanced / gene expression (every tick) ────────────
-        // Gene activation, epigenetic state, cell-type specialisation.
-        systems::advanced::advanced_systems_inner(
-            &mut store,
-            &mut org_reg,
-            &counters,
-            &mut adv.active_genes,
-        );
+        // ── Phase 8: Advanced / gene expression (every 2 ticks) ────────
+        if tick % 2 == 0 {
+            systems::advanced::advanced_systems_inner(
+                &mut store,
+                &mut org_reg,
+                &counters,
+                &mut adv.active_genes,
+            );
+        }
 
-        // ── Phase 9: Reproduction (every 5 ticks) ──────────────────────
-        if tick % 5 == 0 {
+        // ── Phase 9: Reproduction (every tick) ─────────────────────────
+        {
             systems::reproduction::reproduce_inner(
                 &mut store,
                 &config,
@@ -355,8 +358,8 @@ fn simulation_tick(
             );
         }
 
-        // ── Phase 10: Colony detection (every 10 ticks) ─────────────────
-        if tick % 10 == 0 {
+        // ── Phase 10: Colony detection (every 8 ticks) ──────────────────
+        if tick % 8 == 0 {
             systems::colonies::detect_colonies_inner(
                 &store,
                 &config,
@@ -367,11 +370,13 @@ fn simulation_tick(
             );
         }
 
-        // ── Phase 11: Field diffusion & injection ───────────────────────
-        systems::fields::update_fields_inner(&mut fields, &counters, &config, &vents, &mut rng);
+        // ── Phase 11: Field diffusion & injection (every 4 ticks) ───────
+        if tick % 4 == 0 {
+            systems::fields::update_fields_inner(&mut fields, &counters, &config, &vents, &mut rng);
+        }
 
         // ── Phase 12: V6 systems (immune, symbiogenesis, sex, niches) ───
-        if tick % 10 == 0 {
+        if tick % 6 == 0 {
             systems::v6_systems::immune_inner(
                 &mut store,
                 &config,
@@ -380,7 +385,7 @@ fn simulation_tick(
                 &counters,
             );
         }
-        if tick % 5 == 0 {
+        if tick % 10 == 0 {
             systems::v6_systems::symbiogenesis_inner(
                 &mut store,
                 &config,
@@ -391,7 +396,7 @@ fn simulation_tick(
                 &mut phylogeny,
             );
         }
-        if tick % 10 == 0 {
+        if tick % 4 == 0 {
             systems::v6_systems::sexual_reproduce_inner(
                 &mut store,
                 &config,
@@ -403,11 +408,13 @@ fn simulation_tick(
                 &mut rng,
             );
         }
-        // Niche bonuses run every tick (cheap per-particle scan).
-        systems::v6_systems::niche_bonuses_inner(&mut store, &config, &org_reg, &vents);
+        // Niche bonuses (every 6 ticks, matching web).
+        if tick % 6 == 0 {
+            systems::v6_systems::niche_bonuses_inner(&mut store, &config, &org_reg, &vents);
+        }
 
-        // ── Phase 13: Symbols, tools, construction (every 5 ticks) ──────
-        if tick % 5 == 0 {
+        // ── Phase 13: Symbols & tools (every 4 ticks), construction (every 8 ticks)
+        if tick % 4 == 0 {
             systems::symbols_tools::symbols_inner(
                 &mut store,
                 &org_reg,
@@ -418,6 +425,8 @@ fn simulation_tick(
                 &mut adv.active_symbols,
                 &mut rng,
             );
+        }
+        if tick % 5 == 0 {
             systems::symbols_tools::tool_use_inner(
                 &mut store,
                 &mut org_reg,
@@ -426,6 +435,8 @@ fn simulation_tick(
                 &mut adv.tool_count,
                 &mut rng,
             );
+        }
+        if tick % 8 == 0 {
             systems::symbols_tools::construction_inner(
                 &mut store,
                 &org_reg,
@@ -437,7 +448,7 @@ fn simulation_tick(
             );
         }
 
-        // ── Phase 14: Culture & metacognition (every 10 ticks) ──────────
+        // ── Phase 14: Culture (every 10 ticks) & metacognition (every 8 ticks)
         if tick % 10 == 0 {
             systems::culture_metacog::culture_inner(
                 &mut store,
@@ -449,6 +460,8 @@ fn simulation_tick(
                 &mut fields,
                 &mut rng,
             );
+        }
+        if tick % 8 == 0 {
             systems::culture_metacog::meta_cognition_inner(
                 &mut store,
                 &mut org_reg,

@@ -38,7 +38,7 @@ const DRAG: f32 = 0.03;
 /// Deposits are integrated normally (they just sit there with ~zero velocity),
 /// but their age still increments.
 pub fn integrate_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     config: &SimConfig,
 ) {
     let ws = config.world_size;

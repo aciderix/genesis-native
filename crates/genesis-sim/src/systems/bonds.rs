@@ -91,11 +91,11 @@ const EPI_STRESS_MARK: f32 = 0.15;
 ///    - Combo bonus, gene expression, epigenetic weight
 /// 4. Roll the dice and form the bond if probability check passes
 pub fn form_bonds_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     grid: &SpatialGrid,
     config: &SimConfig,
     matrices: &SimMatrices,
-    rng: &mut SimRng,
+    mut rng: &mut SimRng,
 ) {
     let n = store.len();
     if n == 0 {
@@ -238,14 +238,14 @@ pub fn form_bonds_system(
 ///   - Predation counter is incremented
 ///   - Danger symbol is emitted
 pub fn break_bonds_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     config: &SimConfig,
     matrices: &SimMatrices,
-    counters: &mut SimCounters,
-    events: &mut EventLog,
-    fields: &mut SimFields,
+    mut counters: &mut SimCounters,
+    mut events: &mut EventLog,
+    mut fields: &mut SimFields,
     orgs: &OrganismRegistry,
-    rng: &mut SimRng,
+    mut rng: &mut SimRng,
     stats: &SimStats,
 ) {
     let n = store.len();

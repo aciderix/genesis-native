@@ -25,10 +25,10 @@ use std::collections::{HashMap, HashSet};
 //   for each type: sig = ((sig * 7 + floor(count / 2)) & 0xFFFF)
 
 pub fn immune_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     config: &SimConfig,
-    org_reg: &mut OrganismRegistry,
-    org_sigs: &mut OrgSignatures,
+    mut org_reg: &mut OrganismRegistry,
+    mut org_sigs: &mut OrgSignatures,
     counters: &SimCounters,
 ) {
     // Only recompute every 10 ticks
@@ -105,13 +105,13 @@ pub fn immune_system(
 //      e. Remove donor organism
 
 pub fn symbiogenesis_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     config: &SimConfig,
-    org_reg: &mut OrganismRegistry,
-    contacts: &mut ContactTracker,
-    counters: &mut SimCounters,
-    events: &mut EventLog,
-    phylogeny: &mut PhylogenyTree,
+    mut org_reg: &mut OrganismRegistry,
+    mut contacts: &mut ContactTracker,
+    mut counters: &mut SimCounters,
+    mut events: &mut EventLog,
+    mut phylogeny: &mut PhylogenyTree,
 ) {
     let ws = config.world_size;
     let contact_range = config.bond_distance * 2.0;
@@ -420,14 +420,14 @@ pub fn symbiogenesis_system(
 //   • Chain bonds between child particles, close loop if 4+
 
 pub fn sexual_reproduce_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     config: &SimConfig,
-    org_reg: &mut OrganismRegistry,
-    counters: &mut SimCounters,
-    events: &mut EventLog,
-    fields: &mut SimFields,
-    phylogeny: &mut PhylogenyTree,
-    rng: &mut SimRng,
+    mut org_reg: &mut OrganismRegistry,
+    mut counters: &mut SimCounters,
+    mut events: &mut EventLog,
+    mut fields: &mut SimFields,
+    mut phylogeny: &mut PhylogenyTree,
+    mut rng: &mut SimRng,
 ) {
     let ws = config.world_size;
     let ir = config.interaction_radius;
@@ -720,7 +720,7 @@ pub fn sexual_reproduce_system(
 //   Alpha:     0.015 * ratio
 
 pub fn niche_bonuses_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     config: &SimConfig,
     org_reg: &OrganismRegistry,
     vents: &VentList,

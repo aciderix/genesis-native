@@ -28,7 +28,7 @@ use std::f32::consts::TAU;
 /// After the 8 iterations, colony bond averaging blends signals with 0.4 weight.
 /// Memory update: memory += (signal - memory) * 0.03, clamp [-2, 2].
 pub fn propagate_signals_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     matrices: &SimMatrices,
     colonies: &ColonyRegistry,
 ) {
@@ -158,7 +158,7 @@ pub fn propagate_signals_system(
 ///     phase += 0.03 * sig_cond[type_i][type_j] * sin(phase_j - phase_i)
 ///   wrap to [0, TAU)
 pub fn update_phase_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     matrices: &SimMatrices,
 ) {
     let len = store.x.len();

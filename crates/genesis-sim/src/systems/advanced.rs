@@ -502,10 +502,10 @@ pub fn cell_roles_system(
 /// Runs all advanced subsystems in sequence: combos → gene regulation →
 /// epigenetics → cell roles & multicellularity.
 pub fn advanced_systems_inner(
-    store: &mut ParticleStore,
-    org_reg: &mut OrganismRegistry,
+    mut store: &mut ParticleStore,
+    mut org_reg: &mut OrganismRegistry,
     counters: &SimCounters,
-    active_gene_count: &mut ActiveGeneCount,
+    mut active_gene_count: &mut ActiveGeneCount,
 ) {
     combos_system(&mut store, &org_reg, &counters);
     let gene_count = gene_regulation_system(&mut store, &org_reg);

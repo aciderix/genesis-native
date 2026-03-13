@@ -20,11 +20,11 @@ use crate::particle_store::SimRng;
 ///   • Metabolites a/b/c:  diffuse 0.04, decay 0.005
 ///   • Symbol channels:    diffuse 0.06, decay 0.015
 pub fn update_fields_inner(
-    fields: &mut SimFields,
+    mut fields: &mut SimFields,
     counters: &SimCounters,
     config: &SimConfig,
     vents: &VentList,
-    rng: &mut SimRng,
+    mut rng: &mut SimRng,
 ) {
     let tick = counters.tick;
 

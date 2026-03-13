@@ -25,9 +25,9 @@ use std::collections::{HashMap, HashSet};
 pub fn detect_colonies_inner(
     store: &ParticleStore,
     config: &SimConfig,
-    org_reg: &mut OrganismRegistry,
-    col_reg: &mut ColonyRegistry,
-    events: &mut EventLog,
+    mut org_reg: &mut OrganismRegistry,
+    mut col_reg: &mut ColonyRegistry,
+    mut events: &mut EventLog,
     counters: &SimCounters,
 ) {
     let tick = counters.tick;

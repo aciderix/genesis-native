@@ -119,14 +119,14 @@ const VENT_EFFECT_RADIUS: f32 = 12.0;
 ///   `rebuild_grid_system`).
 /// - World wrapping is handled via `delta_wrapped` for correct distance/direction.
 pub fn apply_forces_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     grid: &SpatialGrid,
     config: &SimConfig,
     matrices: &SimMatrices,
     vents: &VentList,
     fields: &SimFields,
     day_night: &DayNightState,
-    rng: &mut SimRng,
+    mut rng: &mut SimRng,
 ) {
     let n = store.len();
     if n == 0 {

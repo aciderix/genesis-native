@@ -23,14 +23,14 @@ use std::collections::HashSet;
 // respond: food → attract, danger → flee, mating → boost repro readiness.
 
 pub fn symbols_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     org_reg: &OrganismRegistry,
-    fields: &mut SimFields,
+    mut fields: &mut SimFields,
     config: &SimConfig,
     counters: &SimCounters,
-    events: &mut EventLog,
-    active_symbols: &mut ActiveSymbolCodes,
-    rng: &mut SimRng,
+    mut events: &mut EventLog,
+    mut active_symbols: &mut ActiveSymbolCodes,
+    mut rng: &mut SimRng,
 ) {
     let ws = config.world_size;
     let tick = counters.tick;
@@ -227,12 +227,12 @@ fn is_near_vent(store: &ParticleStore, idx: usize, _ws: f32) -> bool {
 // Release: energy < 1 or random 1% chance per tick.
 
 pub fn tool_use_inner(
-    store: &mut ParticleStore,
-    org_reg: &mut OrganismRegistry,
+    mut store: &mut ParticleStore,
+    mut org_reg: &mut OrganismRegistry,
     config: &SimConfig,
-    events: &mut EventLog,
-    tool_count: &mut ToolGrabCount,
-    rng: &mut SimRng,
+    mut events: &mut EventLog,
+    mut tool_count: &mut ToolGrabCount,
+    mut rng: &mut SimRng,
 ) {
     let ws = config.world_size;
     let bond_dist = config.bond_distance;
@@ -344,13 +344,13 @@ pub fn tool_use_system(
 // at the same site, a "structure" is formed that provides area energy bonuses.
 
 pub fn construction_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     org_reg: &OrganismRegistry,
     config: &SimConfig,
-    build_sites: &mut BuildSites,
-    build_count: &mut BuildStructureCount,
-    events: &mut EventLog,
-    rng: &mut SimRng,
+    mut build_sites: &mut BuildSites,
+    mut build_count: &mut BuildStructureCount,
+    mut events: &mut EventLog,
+    mut rng: &mut SimRng,
 ) {
     let ws = config.world_size;
     let len = store.id.len();

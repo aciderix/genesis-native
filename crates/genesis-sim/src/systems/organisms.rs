@@ -48,11 +48,11 @@ const MIN_ORGANISM_SIZE: usize = 2;
 /// 4. **Cell role assignment**: Particles in organisms are assigned roles based
 ///    on their type and position within the organism.
 pub fn detect_organisms_inner(
-    store: &mut ParticleStore,
-    org_reg: &mut OrganismRegistry,
-    events: &mut EventLog,
-    counters: &mut SimCounters,
-    phylogeny: &mut PhylogenyTree,
+    mut store: &mut ParticleStore,
+    mut org_reg: &mut OrganismRegistry,
+    mut events: &mut EventLog,
+    mut counters: &mut SimCounters,
+    mut phylogeny: &mut PhylogenyTree,
     stats: &SimStats,
 ) {
     let n = store.len();

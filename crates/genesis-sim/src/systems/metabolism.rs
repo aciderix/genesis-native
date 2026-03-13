@@ -22,13 +22,13 @@ use std::f32::consts::TAU;
 
 /// Main metabolism system — runs every tick.
 pub fn metabolism_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     config: &SimConfig,
     vents: &VentList,
-    fields: &mut SimFields,
-    day_night: &mut DayNightState,
-    events: &mut EventLog,
-    counters: &mut SimCounters,
+    mut fields: &mut SimFields,
+    mut day_night: &mut DayNightState,
+    mut events: &mut EventLog,
+    mut counters: &mut SimCounters,
     orgs: &OrganismRegistry,
 ) {
     let tick = counters.tick;

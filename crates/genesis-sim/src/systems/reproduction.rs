@@ -31,14 +31,14 @@ use std::f32::consts::TAU;
 ///   8. Child generation = parent.generation + 1.
 ///   9. Record phylogeny, inject wave & pheromone, emit event.
 pub fn reproduce_inner(
-    store: &mut ParticleStore,
+    mut store: &mut ParticleStore,
     config: &SimConfig,
-    org_reg: &mut OrganismRegistry,
-    events: &mut EventLog,
-    counters: &mut SimCounters,
-    fields: &mut SimFields,
-    phylogeny: &mut PhylogenyTree,
-    rng: &mut SimRng,
+    mut org_reg: &mut OrganismRegistry,
+    mut events: &mut EventLog,
+    mut counters: &mut SimCounters,
+    mut fields: &mut SimFields,
+    mut phylogeny: &mut PhylogenyTree,
+    mut rng: &mut SimRng,
 ) {
     let ws = config.world_size;
     let max_p = config.max_particles;

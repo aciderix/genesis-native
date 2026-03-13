@@ -29,14 +29,14 @@ use std::collections::{HashMap, HashSet, VecDeque};
 // **Behavioral effects**: memes modify particle behavior per category.
 
 pub fn culture_inner(
-    store: &mut ParticleStore,
-    org_reg: &mut OrganismRegistry,
+    mut store: &mut ParticleStore,
+    mut org_reg: &mut OrganismRegistry,
     config: &SimConfig,
     counters: &SimCounters,
-    events: &mut EventLog,
-    cultural_count: &mut CulturalEventCount,
-    fields: &mut SimFields,
-    rng: &mut SimRng,
+    mut events: &mut EventLog,
+    mut cultural_count: &mut CulturalEventCount,
+    mut fields: &mut SimFields,
+    mut rng: &mut SimRng,
 ) {
     let tick = counters.tick;
     let ws = config.world_size;
@@ -394,11 +394,11 @@ fn apply_meme_effects(store: &mut ParticleStore) {
 //   - Signal coherence (0.97 * signal + 0.03 * memory)
 
 pub fn meta_cognition_inner(
-    store: &mut ParticleStore,
-    org_reg: &mut OrganismRegistry,
-    events: &mut EventLog,
+    mut store: &mut ParticleStore,
+    mut org_reg: &mut OrganismRegistry,
+    mut events: &mut EventLog,
     counters: &SimCounters,
-    metacog_count: &mut MetaCogOrgCount,
+    mut metacog_count: &mut MetaCogOrgCount,
 ) {
     let tick = counters.tick;
     metacog_count.0 = 0;

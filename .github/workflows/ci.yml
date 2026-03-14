@@ -62,6 +62,27 @@ jobs:
       - name: Build (release)
         run: cargo build --release
 
+      - name: Run unit tests
+        run: cargo test --release
+
+      - name: Headless smoke test
+        if: matrix.os == 'Linux'
+        run: |
+          echo "::group::Headless simulation (500 ticks, seed 42)"
+          ./target/release/genesis --headless --ticks 500 --seed 42 --json
+          echo "::endgroup::"
+
+      - name: Headless determinism check
+        if: matrix.os == 'Linux'
+        run: |
+          A=$(./target/release/genesis --headless --ticks 200 --seed 42 --json)
+          B=$(./target/release/genesis --headless --ticks 200 --seed 42 --json)
+          if [ "$A" = "$B" ]; then
+            echo "✅ Deterministic: identical outputs for same seed"
+          else
+            echo "❌ Non-deterministic!" && diff <(echo "$A") <(echo "$B") && exit 1
+          fi
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:

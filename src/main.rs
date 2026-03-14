@@ -87,10 +87,6 @@ fn run_gui(sim_plugin: GenesisSimPlugin) {
 
     let mut app = App::new();
 
-    // ── WASM / mobile: disable MSAA (huge GPU savings) ─────────────
-    #[cfg(target_arch = "wasm32")]
-    app.insert_resource(Msaa::Off);
-
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Genesis Engine v6.1".into(),

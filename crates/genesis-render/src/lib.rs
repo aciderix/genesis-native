@@ -179,7 +179,7 @@ fn setup_rendering(
     // ------------------------------------------------------------------
 
     let ws = config.world_size;
-    commands.spawn((
+    let camera_bundle = (
         Camera3d::default(),
         Transform::from_translation(Vec3::new(0.0, ws * 0.3, ws * 1.2))
             .looking_at(Vec3::ZERO, Vec3::Y),
@@ -189,7 +189,13 @@ fn setup_rendering(
             pitch: 0.3,
             target: Vec3::ZERO,
         },
-    ));
+    );
+
+    #[cfg(target_arch = "wasm32")]
+    commands.spawn((camera_bundle, Msaa::Off));
+
+    #[cfg(not(target_arch = "wasm32"))]
+    commands.spawn(camera_bundle);
 
     // ------------------------------------------------------------------
     // Lighting

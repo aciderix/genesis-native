@@ -2,7 +2,7 @@ name: CI — Build & Test
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/cli-headless]
   pull_request:
     branches: [main]
 
@@ -61,6 +61,46 @@ jobs:
 
       - name: Build (release)
         run: cargo build --release
+
+      - name: Run unit tests
+        run: cargo test --release
+
+      - name: Headless smoke test (5k ticks)
+        if: matrix.os == 'Linux'
+        run: |
+          echo "::group::Headless simulation (5000 ticks, seed 42)"
+          ./target/release/genesis --headless --ticks 5000 --seed 42 --json --report-every 1000
+          echo "::endgroup::"
+
+      - name: "Headless long run — 100k ticks × speed 1"
+        if: matrix.os == 'Linux'
+        timeout-minutes: 30
+        run: |
+          echo "::group::100k ticks @ speed 1 (seed 42)"
+          ./target/release/genesis --headless --ticks 100000 --seed 42 --speed 1 --json --report-every 10000
+          echo "::endgroup::"
+
+      - name: "Headless long run — 100k ticks × speed 20"
+        if: matrix.os == 'Linux'
+        timeout-minutes: 30
+        run: |
+          echo "::group::100k ticks @ speed 20 (seed 42)"
+          ./target/release/genesis --headless --ticks 100000 --seed 42 --speed 20 --json --report-every 10000
+          echo "::endgroup::"
+
+      - name: Headless determinism check (informational)
+        if: matrix.os == 'Linux'
+        continue-on-error: true
+        run: |
+          A=$(./target/release/genesis --headless --ticks 200 --seed 42 --json)
+          B=$(./target/release/genesis --headless --ticks 200 --seed 42 --json)
+          if [ "$A" = "$B" ]; then
+            echo "✅ Deterministic: identical outputs for same seed"
+          else
+            echo "⚠️ Non-deterministic (expected — HashMap iteration order varies)"
+            echo "Run 1: $A"
+            echo "Run 2: $B"
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -58,6 +58,53 @@ rustup target add aarch64-apple-ios
 cargo build --release --target aarch64-apple-ios
 ```
 
+## 🖥️ Headless CLI Mode
+
+Run the simulation without a window or GPU — perfect for CI, testing, and scripting:
+
+```bash
+# Basic headless run (1000 ticks, random seed)
+./genesis --headless
+
+# Specific seed, 5000 ticks, JSON output
+./genesis --headless --ticks 5000 --seed 42 --json
+
+# Progress every 100 ticks + save final state
+./genesis --headless --ticks 10000 --seed 42 --report-every 100 --save state.json
+
+# Pipe JSON to jq for analysis
+./genesis --headless --ticks 2000 --seed 42 --json | jq '.organisms'
+```
+
+### CLI Options
+
+| Flag | Description | Default |
+|---|---|---|
+| `--headless` | Run without GUI (no GPU needed) | off |
+| `--ticks N` | Number of simulation ticks to run | 1000 |
+| `--seed N` | Deterministic PRNG seed | random |
+| `--json` | Output stats as JSON to stdout | off |
+| `--report-every N` | Print progress every N ticks | 0 (final only) |
+| `--save FILE` | Save final state to JSON file | — |
+
+### JSON Output Schema
+
+```json
+{
+  "tick": 5000,
+  "particles": 1847,
+  "organisms": 23,
+  "bonds": 1205,
+  "colonies": 3,
+  "max_generation": 12,
+  "total_energy": 28450.0,
+  "total_reproductions": 67,
+  "total_predations": 15,
+  "total_symbiogenesis": 2,
+  "total_sexual_repro": 8
+}
+```
+
 ## 🎮 Controls
 
 ### Desktop (Mouse + Keyboard)

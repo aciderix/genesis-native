@@ -47,6 +47,10 @@ struct Cli {
     /// Save final state to a JSON file
     #[arg(long)]
     save: Option<String>,
+
+    /// Simulation speed multiplier (default: 200 in headless)
+    #[arg(long)]
+    speed: Option<f32>,
 }
 
 fn main() {
@@ -116,6 +120,8 @@ struct HeadlessConfig {
     json_output: bool,
     save_path: Option<String>,
     last_report_tick: u64,
+    speed: f32,
+    start_time: std::time::Instant,
 }
 
 /// Run the simulation headless — no window, no GPU, pure computation.
@@ -132,8 +138,11 @@ fn run_headless(sim_plugin: GenesisSimPlugin, cli: &Cli) {
                 .map_or("random".to_string(), |s| s.to_string())
         );
         eprintln!("   Ticks:  {}", cli.ticks);
+        eprintln!("   Speed:  {}×", speed);
         eprintln!();
     }
+
+    let speed = cli.speed.unwrap_or(200.0);
 
     App::new()
         .add_plugins(
@@ -148,6 +157,8 @@ fn run_headless(sim_plugin: GenesisSimPlugin, cli: &Cli) {
             json_output: cli.json,
             save_path: cli.save.clone(),
             last_report_tick: 0,
+            speed,
+            start_time: std::time::Instant::now(),
         })
         .add_systems(Startup, boost_headless_speed)
         .add_systems(Update, headless_monitor)
@@ -157,9 +168,11 @@ fn run_headless(sim_plugin: GenesisSimPlugin, cli: &Cli) {
 /// In headless mode, crank up the simulation speed so we burn through
 /// ticks as fast as the CPU allows.
 #[cfg(not(target_arch = "wasm32"))]
-fn boost_headless_speed(mut config: ResMut<genesis_sim::config::SimConfig>) {
-    // 200 sim ticks per FixedUpdate frame → ~12,800 ticks/sec at 64 Hz
-    config.speed = 200.0;
+fn boost_headless_speed(
+    mut sim_config: ResMut<genesis_sim::config::SimConfig>,
+    headless_config: Res<HeadlessConfig>,
+) {
+    sim_config.speed = headless_config.speed;
 }
 
 /// Monitor simulation progress and exit when the target tick count is reached.
@@ -214,8 +227,13 @@ fn headless_monitor(
 
         // Output final stats
         if hcfg.json_output {
+            let elapsed = hcfg.start_time.elapsed().as_secs_f64();
+            let ticks_per_sec = tick as f64 / elapsed;
             let output = serde_json::json!({
                 "tick": tick,
+                "speed": hcfg.speed,
+                "elapsed_seconds": (elapsed * 100.0).round() / 100.0,
+                "ticks_per_second": (ticks_per_sec).round(),
                 "particles": stats.particle_count,
                 "organisms": stats.organism_count,
                 "bonds": stats.bond_count,

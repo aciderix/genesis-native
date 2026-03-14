@@ -85,9 +85,13 @@ fn run_gui(sim_plugin: GenesisSimPlugin) {
     use genesis_render::GenesisRenderPlugin;
     use genesis_ui::GenesisUiPlugin;
 
-    App::new()
-        // ── Core Bevy plugins ──────────────────────────────────────────
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
+    let mut app = App::new();
+
+    // ── WASM / mobile: disable MSAA (huge GPU savings) ─────────────
+    #[cfg(target_arch = "wasm32")]
+    app.insert_resource(Msaa::Off);
+
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Genesis Engine v6.1".into(),
                 resolution: (1280.0, 720.0).into(),

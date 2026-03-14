@@ -61,6 +61,22 @@
     </div>
 
     <script>
+        // ── Mobile performance: cap devicePixelRatio to avoid rendering
+        //    at 2x–3x resolution on retina phones ──────────────────────
+        (function() {
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile && window.devicePixelRatio > 1.5) {
+                // Force canvas to render at ~1.5x max — huge GPU savings.
+                const canvas = document.getElementById('bevy-canvas');
+                const scale = 1.5 / window.devicePixelRatio;
+                canvas.style.transform = 'scale(1)';
+                // Override the pixel ratio Bevy sees by scaling the canvas element.
+                Object.defineProperty(window, 'devicePixelRatio', {
+                    get: () => 1.5,
+                });
+            }
+        })();
+
         const progressEl = document.getElementById('progress');
         const statusEl = document.getElementById('status');
         const loadingEl = document.getElementById('loading');

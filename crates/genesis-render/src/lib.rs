@@ -115,8 +115,11 @@ fn setup_rendering(
     // Shared meshes
     // ------------------------------------------------------------------
 
-    // Low-poly icosphere for particles (subdivision level 2 ≈ 162 verts).
-    let sphere = meshes.add(Sphere::new(0.3).mesh().ico(2).unwrap());
+    // Icosphere for particles — lower detail on WASM/mobile for performance.
+    #[cfg(target_arch = "wasm32")]
+    let sphere = meshes.add(Sphere::new(0.3).mesh().ico(1).unwrap()); // ~42 verts
+    #[cfg(not(target_arch = "wasm32"))]
+    let sphere = meshes.add(Sphere::new(0.3).mesh().ico(2).unwrap()); // ~162 verts
     // Unit cylinder used for bonds (scaled at runtime).
     let cylinder = meshes.add(Cylinder::new(0.05, 1.0).mesh());
 
@@ -192,24 +195,30 @@ fn setup_rendering(
     // Lighting
     // ------------------------------------------------------------------
 
-    // Soft ambient fill.
+    // Soft ambient fill — brighter on WASM to compensate for no point light.
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
+        #[cfg(target_arch = "wasm32")]
+        brightness: 500.0,
+        #[cfg(not(target_arch = "wasm32"))]
         brightness: 300.0,
     });
 
-    // Primary directional "sun" light with shadows.
+    // Primary directional "sun" light.
+    // WASM/mobile: shadows OFF (massive GPU savings on WebGL2).
     commands.spawn((
         DirectionalLight {
             color: Color::srgb(1.0, 0.95, 0.8),
             illuminance: 8000.0,
-            shadows_enabled: true,
+            shadows_enabled: cfg!(not(target_arch = "wasm32")),
             ..default()
         },
         Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -0.8, 0.5, 0.0)),
     ));
 
     // Cool-toned point light at the world origin for fill.
+    // Skip on WASM to reduce draw calls.
+    #[cfg(not(target_arch = "wasm32"))]
     commands.spawn((
         PointLight {
             color: Color::srgb(0.5, 0.7, 1.0),

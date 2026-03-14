@@ -187,6 +187,10 @@ pub fn generate_config(seed: Option<u32>) -> SimConfig {
     let mut range = |lo: f32, hi: f32| -> f32 { lo + rng() * (hi - lo) };
 
     let world_size = range(30.0, 50.0);
+    // WASM/mobile: fewer particles to keep 30+ FPS on phones.
+    #[cfg(target_arch = "wasm32")]
+    let particle_count = range(400.0, 700.0) as usize;
+    #[cfg(not(target_arch = "wasm32"))]
     let particle_count = range(1200.0, 2000.0) as usize;
     let vent_count = range(3.0, 9.0) as usize;
     let vent_strength = range(0.4, 1.0);
@@ -229,7 +233,14 @@ pub fn generate_config(seed: Option<u32>) -> SimConfig {
         type_distribution: td,
         speed: 1.0,
         paused: false,
+        // WASM/mobile: lower caps to keep framerate stable.
+        #[cfg(target_arch = "wasm32")]
+        max_particles: 1500,
+        #[cfg(not(target_arch = "wasm32"))]
         max_particles: 5000,
+        #[cfg(target_arch = "wasm32")]
+        max_deposits: 300,
+        #[cfg(not(target_arch = "wasm32"))]
         max_deposits: 800,
     }
 }

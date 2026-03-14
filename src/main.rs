@@ -130,6 +130,8 @@ struct HeadlessConfig {
 fn run_headless(sim_plugin: GenesisSimPlugin, cli: &Cli) {
     use std::time::Duration;
 
+    let speed = cli.speed.unwrap_or(200.0);
+
     if !cli.json {
         eprintln!("🧬 Genesis Engine — Headless Mode");
         eprintln!(
@@ -141,8 +143,6 @@ fn run_headless(sim_plugin: GenesisSimPlugin, cli: &Cli) {
         eprintln!("   Speed:  {}×", speed);
         eprintln!();
     }
-
-    let speed = cli.speed.unwrap_or(200.0);
 
     App::new()
         .add_plugins(

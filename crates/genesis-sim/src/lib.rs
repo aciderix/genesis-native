@@ -480,18 +480,18 @@ fn simulation_tick(
         if tick % 50 == 0 {
             store.cleanup();
         }
-    }
 
-    // ── Post-tick statistics ────────────────────────────────────────────
-    update_stats(
-        &store,
-        &counters,
-        &org_reg,
-        &col_reg,
-        &day_night,
-        &mut stats,
-        &mut history,
-    );
+        // ── Post-tick statistics (inside loop so stats are fresh each tick) ─
+        update_stats(
+            &store,
+            &counters,
+            &org_reg,
+            &col_reg,
+            &day_night,
+            &mut stats,
+            &mut history,
+        );
+    }
 }
 
 // ── Statistics helper ───────────────────────────────────────────────────────
